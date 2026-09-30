@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hvem skylder hvem?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --papir:#F5F7F4; --flade:#FFFFFF; --blaek:#1E2B3A; --graa:#6B7787; --linje:#D6DCD4;
+    --plus:#237A57; --plus-bg:#E4F3EB; --minus:#B23F35; --minus-bg:#F8E6E3;
+    --knap:#1E2B3A; --fokus:#3D7BD9;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--papir);color:var(--blaek);font:16px/1.5 "IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-variant-numeric:tabular-nums}
+  main{max-width:640px;margin:0 auto;padding:28px 16px 64px}
+  h1{font-size:30px;line-height:1.15;font-weight:600;margin:0 0 6px;letter-spacing:-.01em}
+  .intro{margin:0 0 28px;color:var(--graa)}
+  h2{font-size:17px;font-weight:600;margin:32px 0 10px}
+  section{background:var(--flade);border:1px solid var(--linje);border-radius:10px;padding:16px}
+  input,select,button{font:inherit;color:inherit}
+  input,select{border:1px solid var(--linje);border-radius:7px;padding:9px 10px;background:#fff;min-width:0;width:100%}
+  input:focus,select:focus,button:focus-visible{outline:2px solid var(--fokus);outline-offset:1px}
+  button{border:1px solid var(--linje);background:#fff;border-radius:7px;padding:9px 14px;cursor:pointer}
+  button.primaer{background:var(--knap);color:#fff;border-color:var(--knap);font-weight:500}
+  button.stor{width:100%;padding:14px;font-size:17px;margin-top:24px}
+  button.lille{padding:4px 9px;font-size:14px;color:var(--graa)}
+  .raekke{display:flex;gap:8px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .chip{display:inline-flex;align-items:center;gap:6px;background:var(--papir);border:1px solid var(--linje);border-radius:999px;padding:5px 6px 5px 12px}
+  .chip button{border:0;background:transparent;padding:0 6px;color:var(--graa);font-size:18px;line-height:1}
+  .chip button:hover{color:var(--minus)}
+  .tom{color:var(--graa);margin:8px 0 0}
+
+  .udgift{padding:14px 0;border-top:1px solid var(--linje)}
+  .udgift:first-child{border-top:0;padding-top:0}
+  .udgift .raekke{margin-bottom:8px}
+  .udgift select{flex:1}
+  .udgift .beloeb{flex:1;min-width:130px}
+  .udgift .beskriv{flex:.8}
+  .udgift .beloeb input{text-align:right}
+  .deles{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;font-size:14px;color:var(--graa)}
+  .deles label{display:inline-flex;align-items:center;gap:5px;color:var(--blaek);cursor:pointer}
+  .deles input{width:16px;height:16px;margin:0}
+  .deles .fjern{margin-left:auto}
+  .tilfoej{margin-top:14px}
+
+  /* resultat */
+  #resultat{display:none}
+  .afregning{border-color:var(--blaek);border-width:2px}
+  .overfoersel{display:grid;grid-template-columns:1fr auto;align-items:baseline;gap:12px;padding:12px 0;border-top:1px solid var(--linje)}
+  .overfoersel:first-child{border-top:0;padding-top:0}
+  .overfoersel .hvem{font-size:17px}
+  .overfoersel .hvem b{font-weight:600}
+  .overfoersel .kr{font-size:24px;font-weight:600;white-space:nowrap}
+  .kvit{font-size:20px;font-weight:600;margin:0}
+  table{width:100%;border-collapse:collapse;font-size:15px}
+  th,td{padding:8px 6px;border-top:1px solid var(--linje);text-align:right;white-space:nowrap}
+  th{font-weight:500;color:var(--graa);border-top:0}
+  th:first-child,td:first-child{text-align:left}
+  td.plus{color:var(--plus);font-weight:600}
+  td.minus{color:var(--minus);font-weight:600}
+  .total{display:flex;justify-content:space-between;margin:12px 0 0;color:var(--graa);font-size:15px}
+  .vaerktoej{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+  .fejl{background:var(--minus-bg);color:var(--minus);border-radius:7px;padding:10px 12px;margin-top:14px;display:none}
+  .note{font-size:13px;color:var(--graa);margin:28px 0 0}
+  @media (prefers-reduced-motion:no-preference){#resultat.vis{animation:ind .25s ease-out}}
+  @keyframes ind{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  @media (max-width:420px){table{font-size:13px}th,td{padding:8px 4px}.udgift .raekke{flex-wrap:wrap}.udgift select{flex:1 1 40%}.udgift .beloeb{flex:1 1 50%}.udgift .beskriv{flex:1 1 100%}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Hvem skylder hvem?</h1>
+  <p class="intro">Skriv hvem der er med, hvem der lagde ud for hvad, og tryk beregn. Siden husker jeres liste i denne browser.</p>
+
+  <h2>Deltagere</h2>
+  <section>
+    <form class="raekke" id="deltagerForm">
+      <input id="nytNavn" placeholder="Navn" autocomplete="off" aria-label="Nyt navn">
+      <button type="submit">Tilføj</button>
+    </form>
+    <div class="chips" id="chips"></div>
+    <p class="tom" id="ingenDeltagere">Tilføj mindst to personer for at komme i gang.</p>
+  </section>
+
+  <h2>Udgifter</h2>
+  <section>
+    <div id="udgifter"></div>
+    <p class="tom" id="ingenUdgifter">Ingen udgifter endnu.</p>
+    <button type="button" class="tilfoej" id="nyUdgift">+ Ny udgift</button>
+  </section>
+
+  <div class="fejl" id="fejl"></div>
+  <button type="button" class="primaer stor" id="beregn">Beregn afregning</button>
+
+  <div id="resultat">
+    <h2>Afregning</h2>
+    <section class="afregning" id="overfoersler"></section>
+
+    <h2>Balance</h2>
+    <section>
+      <table id="balance"></table>
+      <p class="total" id="total"></p>
+    </section>
+
+    <div class="vaerktoej">
+      <button type="button" id="kopier">Kopiér afregning</button>
+      <button type="button" id="rydAlt">Ryd alt</button>
+    </div>
+  </div>
+
+  <p class="note">En udgift deles ligeligt mellem dem, der er sat hak ved. Er ingen sat hak ved, deles den med alle. Alt ligger kun i din egen browser – intet sendes nogen steder hen.</p>
+</main>
+
+<script>
+(function(){
+  const NOEGLE = 'udgiftsdeler-v1';
+  let deltagere = [];          // ["Anna", "Bo"]
+  let udgifter  = [];          // {betaltAf, beloeb, beskrivelse, delesMed:[...] }
+
+  const $ = id => document.getElementById(id);
+  const kr = n => n.toLocaleString('da-DK',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' kr.';
+
+  // ---------- gem / hent (fejler stille hvis localStorage er blokeret, fx i en iframe)
+  function gem(){ try{ localStorage.setItem(NOEGLE, JSON.stringify({deltagere, udgifter})); }catch(e){} }
+  function hent(){ try{ const d = JSON.parse(localStorage.getItem(NOEGLE)); if(d){deltagere=d.deltagere||[]; udgifter=d.udgifter||[];} }catch(e){} }
+
+  // ---------- deltagere
+  function tegnDeltagere(){
+    const c = $('chips'); c.innerHTML='';
+    deltagere.forEach(n=>{
+      const s=document.createElement('span'); s.className='chip'; s.textContent=n;
+      const b=document.createElement('button'); b.type='button'; b.textContent='×'; b.setAttribute('aria-label','Fjern '+n);
+      b.onclick=()=>fjernDeltager(n); s.appendChild(b); c.appendChild(s);
+    });
+    $('ingenDeltagere').style.display = deltagere.length<2 ? '' : 'none';
+    tegnUdgifter();
+  }
+  function fjernDeltager(n){
+    deltagere = deltagere.filter(x=>x!==n);
+    udgifter = udgifter.filter(u=>u.betaltAf!==n).map(u=>({...u, delesMed:u.delesMed.filter(x=>x!==n)}));
+    gem(); tegnDeltagere();
+  }
+  $('deltagerForm').onsubmit = e=>{
+    e.preventDefault();
+    const n = $('nytNavn').value.trim();
+    if(!n) return;
+    if(deltagere.some(x=>x.toLowerCase()===n.toLowerCase())){ visFejl(n+' er allerede med.'); return; }
+    deltagere.push(n); $('nytNavn').value=''; visFejl(''); gem(); tegnDeltagere();
+  };
+
+  // ---------- udgifter
+  function tegnUdgifter(){
+    const c=$('udgifter'); c.innerHTML='';
+    udgifter.forEach((u,i)=>{
+      const d=document.createElement('div'); d.className='udgift';
+      const r=document.createElement('div'); r.className='raekke';
+
+      const sel=document.createElement('select'); sel.setAttribute('aria-label','Betalt af');
+      const o0=document.createElement('option'); o0.value=''; o0.textContent='Betalt af…'; sel.appendChild(o0);
+      deltagere.forEach(n=>{const o=document.createElement('option'); o.value=n; o.textContent=n; sel.appendChild(o);});
+      sel.value = deltagere.includes(u.betaltAf)?u.betaltAf:'';
+      sel.onchange=()=>{u.betaltAf=sel.value; gem();};
+
+      const bw=document.createElement('div'); bw.className='beloeb';
+      const b=document.createElement('input'); b.type='number'; b.step='0.01'; b.min='0'; b.inputMode='decimal'; b.placeholder='Beløb';
+      b.value=u.beloeb??''; b.setAttribute('aria-label','Beløb'); b.oninput=()=>{u.beloeb=b.value; gem();}; bw.appendChild(b);
+
+      const t=document.createElement('input'); t.className='beskriv'; t.placeholder='Hvad (valgfrit)'; t.value=u.beskrivelse||'';
+      t.setAttribute('aria-label','Beskrivelse'); t.oninput=()=>{u.beskrivelse=t.value; gem();};
+
+      r.append(sel,bw,t); d.appendChild(r);
+
+      const dm=document.createElement('div'); dm.className='deles';
+      const lbl=document.createElement('span'); lbl.textContent='Deles med:'; dm.appendChild(lbl);
+      deltagere.forEach(n=>{
+        const l=document.createElement('label');
+        const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=u.delesMed.includes(n);
+        cb.onchange=()=>{ u.delesMed = cb.checked ? [...u.delesMed,n] : u.delesMed.filter(x=>x!==n); gem(); };
+        l.append(cb, document.createTextNode(n)); dm.appendChild(l);
+      });
+      const f=document.createElement('button'); f.type='button'; f.className='lille fjern'; f.textContent='Fjern';
+      f.onclick=()=>{udgifter.splice(i,1); gem(); tegnUdgifter();}; dm.appendChild(f);
+      d.appendChild(dm); c.appendChild(d);
+    });
+    $('ingenUdgifter').style.display = udgifter.length ? 'none' : '';
+  }
+  $('nyUdgift').onclick=()=>{
+    if(deltagere.length<2){ visFejl('Tilføj deltagere først.'); return; }
+    visFejl('');
+    udgifter.push({betaltAf:'', beloeb:'', beskrivelse:'', delesMed:[...deltagere]});
+    gem(); tegnUdgifter();
+    const inputs=$('udgifter').querySelectorAll('select'); inputs[inputs.length-1].focus();
+  };
+
+  // ---------- beregning
+  function beregn(){
+    const lagtUd={}, andel={};
+    deltagere.forEach(n=>{lagtUd[n]=0; andel[n]=0;});
+    let total=0;
+    for(const u of udgifter){
+      const b=parseFloat(String(u.beloeb).replace(',','.'));
+      if(!u.betaltAf) throw new Error('En udgift mangler hvem der har betalt.');
+      if(isNaN(b)||b<=0) throw new Error('En udgift mangler et beløb.');
+      const gruppe = u.delesMed.length ? u.delesMed : deltagere;
+      lagtUd[u.betaltAf]+=b; total+=b;
+      gruppe.forEach(n=>andel[n]+=b/gruppe.length);
+    }
+    const netto = deltagere.map(n=>({navn:n, lagtUd:lagtUd[n], andel:andel[n], netto:lagtUd[n]-andel[n]}));
+
+    // grådig afregning: største skyldner -> største kreditor
+    const skyld = netto.filter(x=>x.netto<-0.005).map(x=>({navn:x.navn,rest:-x.netto})).sort((a,b)=>b.rest-a.rest);
+    const kred  = netto.filter(x=>x.netto> 0.005).map(x=>({navn:x.navn,rest: x.netto})).sort((a,b)=>b.rest-a.rest);
+    const ovf=[]; let i=0,j=0;
+    while(i<skyld.length && j<kred.length){
+      const m=Math.min(skyld[i].rest,kred[j].rest);
+      ovf.push({fra:skyld[i].navn, til:kred[j].navn, beloeb:m});
+      skyld[i].rest-=m; kred[j].rest-=m;
+      if(skyld[i].rest<0.005) i++;
+      if(kred[j].rest<0.005) j++;
+    }
+    return {netto, ovf, total};
+  }
+
+  let sidste=null;
+  $('beregn').onclick=()=>{
+    if(deltagere.length<2){ visFejl('Der skal være mindst to deltagere.'); return; }
+    if(!udgifter.length){ visFejl('Tilføj mindst én udgift.'); return; }
+    try{ sidste=beregn(); }catch(e){ visFejl(e.message); return; }
+    visFejl(''); tegnResultat(sidste);
+  };
+
+  function tegnResultat({netto,ovf,total}){
+    const o=$('overfoersler'); o.innerHTML='';
+    if(!ovf.length){ const p=document.createElement('p'); p.className='kvit'; p.textContent='Alle er kvit.'; o.appendChild(p); }
+    ovf.forEach(x=>{
+      const d=document.createElement('div'); d.className='overfoersel';
+      const h=document.createElement('div'); h.className='hvem';
+      h.innerHTML='<b></b> betaler til <b></b>'; const bs=h.querySelectorAll('b'); bs[0].textContent=x.fra; bs[1].textContent=x.til;
+      const k=document.createElement('div'); k.className='kr'; k.textContent=kr(x.beloeb);
+      d.append(h,k); o.appendChild(d);
+    });
+    const t=$('balance'); t.innerHTML='<tr><th>Navn</th><th>Lagt ud</th><th>Egen andel</th><th>Netto</th></tr>';
+    netto.forEach(x=>{
+      const tr=document.createElement('tr');
+      const c1=document.createElement('td'); c1.textContent=x.navn;
+      const c2=document.createElement('td'); c2.textContent=kr(x.lagtUd);
+      const c3=document.createElement('td'); c3.textContent=kr(x.andel);
+      const c4=document.createElement('td'); c4.textContent=(x.netto>0?'+':'')+kr(x.netto);
+      c4.className = x.netto>0.005?'plus':x.netto<-0.005?'minus':'';
+      tr.append(c1,c2,c3,c4); t.appendChild(tr);
+    });
+    $('total').innerHTML=''; const s1=document.createElement('span'); s1.textContent='Udgifter i alt'; const s2=document.createElement('span'); s2.textContent=kr(total); $('total').append(s1,s2);
+    const r=$('resultat'); r.style.display='block'; r.classList.remove('vis'); void r.offsetWidth; r.classList.add('vis');
+    r.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+
+  $('kopier').onclick=async()=>{
+    if(!sidste) return;
+    const linjer = sidste.ovf.length ? sidste.ovf.map(x=>`${x.fra} betaler ${kr(x.beloeb)} til ${x.til}`) : ['Alle er kvit.'];
+    const tekst = 'Afregning\n'+linjer.join('\n')+`\n\nUdgifter i alt: ${kr(sidste.total)}`;
+    try{ await navigator.clipboard.writeText(tekst); $('kopier').textContent='Kopieret'; setTimeout(()=>$('kopier').textContent='Kopiér afregning',1500); }
+    catch(e){ window.prompt('Kopiér teksten herfra:', tekst); }
+  };
+  $('rydAlt').onclick=()=>{
+    if(!confirm('Slet alle deltagere og udgifter?')) return;
+    deltagere=[]; udgifter=[]; sidste=null; gem(); $('resultat').style.display='none'; tegnDeltagere();
+  };
+  function visFejl(m){ const f=$('fejl'); f.textContent=m; f.style.display=m?'block':'none'; }
+
+  hent(); tegnDeltagere();
+})();
+</script>
+</body>
+</html>
